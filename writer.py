@@ -67,13 +67,14 @@ class mymotor(Motor):
 class Writer():
 
     def __init__(self, calibrate=True):
-        self.mot_A    = mymotor(OUTPUT_C)
-        self.mot_B    = mymotor(OUTPUT_A)
+        self.mot_A = mymotor(OUTPUT_C)
+        self.mot_B = mymotor(OUTPUT_A)
 
         self.mot_lift = mymotor(OUTPUT_B)
 
         self.touch_A  = TouchSensor(INPUT_3)
-        self.touch_B  = TouchSensor(INPUT_2)
+        #self.touch_B  = TouchSensor(INPUT_2)
+        self.color_B = ColorSensor(INPUT_2)
 
         if (calibrate):
             self.calibrate()
@@ -88,6 +89,9 @@ class Writer():
         self.mot_lift.goto_position(0, 30, regulate = 'off', stop_command='brake', wait = wait)
         if wait:
             time.sleep(0.1)
+
+    def color_B_value(self):
+        return self.color_B.reflected_light_intensity>0
 
     def calibrate (self):
         self.mot_lift.rotate_forever(speed=-50, regulate='off')
@@ -110,14 +114,14 @@ class Writer():
 
         if (self.touch_A.value()):
             self.mot_A.goto_position(-200, speed=400, regulate='on', stop_command='coast', wait=1)
-        if (self.touch_B.value()):
+        if (self.color_B_value()):
             self.mot_B.goto_position(200, speed=400, regulate='on', stop_command='coast', wait=1)
         self.mot_B.rotate_forever(speed=-25, regulate='off')
         self.mot_A.rotate_forever(speed=25, regulate='off')
         stop_A = stop_B = False
         start = time.time()
         while True:
-            touch_A, touch_B = self.touch_A.value(), self.touch_B.value()
+            touch_A, touch_B = self.touch_A.value(), self.color_B_value()
             if (not stop_A and touch_A):
                 pos = self.mot_A.position
                 self.mot_A.stop()
@@ -192,7 +196,8 @@ class Writer():
             if xIA > xIA2:
                 xIA = xIA2
                 yIA = yIA2
-            ((xIB, yIB), (xIB2, yIA2)) = Writer.get_coord_intersec (xE, yE, Writer.xB, Writer.yB, Writer.r1, Writer.r2)
+            # yIA2
+            ((xIB, yIB), (xIB2, yIB2)) = Writer.get_coord_intersec (xE, yE, Writer.xB, Writer.yB, Writer.r1, Writer.r2)
             if xIB < xIB2:
                 xIB = xIB2
                 yIB = yIB2
